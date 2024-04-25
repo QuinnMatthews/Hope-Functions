@@ -1,3 +1,5 @@
 kv_namespaces = [
     { binding = "KV", id = "e5a77695cc8541a8869e4cf09bbc570a" }
 ]
+
+pages_build_output_dir = "build"

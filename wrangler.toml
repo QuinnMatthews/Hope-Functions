@@ -1,6 +1,6 @@
 
 name = "hope-functions"
-pages_build_output_dir = "./dist"
+pages_build_output_dir = "./public"
 
 [[kv_namespaces]]
 binding = "KV"

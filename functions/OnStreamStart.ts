@@ -79,7 +79,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await context.env.KV.put('refresh_token_exp', refresh_token_exp.toString());
   }
 
+  //
   // Get Channels
+  //
   let response = await fetch('https://api.restream.io/v2/user/channel/all', {
     headers: {
       'Authorization': `Bearer ${access_token}`
@@ -91,6 +93,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (data.error) {
     return new Response(data.error, { status: 401 });
   }
+
+  //
+  // Build Teams Post
+  //
+  var post = new Object();
+  post['@type'] = 'MessageCard';
+  post['@context'] = 'http://schema.org/extensions';
+  post['themeColor'] = '0076D7';
+  post['summary'] = 'New Live Stream URLs';
+  post['sections'] = [];
+  post['sections'][0] = new Object();
+  post['sections'][0]['activityTitle'] = 'Live Stream Started';
+  post['sections'][0]['activityImage'] = 'https://bitfocus.io/_next/image?url=%2Fcompanion.png&w=128&q=75';
+  post['sections'][0]['facts'] = [];
+  post['sections'][0]['markdown'] = true;
+
+  for (var channel of data) {
+    if (channel.enabled) {
+      post['sections'][0]['facts'].push({ name: 'Display Name', value: channel.displayName });
+      post['sections'][0]['facts'].push({ name: 'URL', value: channel.url });
+    }
+  }
+
+  // Post to Teams
+  const teams_url = await context.env.KV.get('teams_url');
+  if (!teams_url) {
+    return new Response('Teams URL Not Found', { status: 400 });
+  }
+
+  response = await fetch(teams_url, {
+    headers: {
+      'content-type': 'application/json'
+    },
+    method: 'POST',
+    body: JSON.stringify(post)
+  });
 
   return new Response(JSON.stringify(data), { status: 200 });
 }

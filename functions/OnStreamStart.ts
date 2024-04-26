@@ -130,5 +130,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     body: JSON.stringify(post)
   });
 
+  data = await response.json();
+
+  if (data.error) {
+    return new Response(data.error, { status: 400 });
+  }
+
   return new Response(JSON.stringify(data), { status: 200 });
 }

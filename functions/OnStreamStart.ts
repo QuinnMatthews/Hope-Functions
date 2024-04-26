@@ -92,6 +92,5 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return new Response(data.error, { status: 401 });
   }
 
-  const value = "test";
-  return new Response(value);
+  return new Response(JSON.stringify(data), { status: 200 });
 }

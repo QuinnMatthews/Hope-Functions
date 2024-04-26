@@ -122,6 +122,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return new Response('Teams URL Not Found', { status: 400 });
   }
 
+  console.log(JSON.stringify(post));
+
   response = await fetch(teams_url, {
     headers: {
       'content-type': 'application/json'
@@ -131,6 +133,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   });
 
   data = await response.json();
+
+  console.log(JSON.stringify(data));
 
   if (data.error) {
     return new Response(data.error, { status: 400 });

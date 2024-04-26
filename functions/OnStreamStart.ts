@@ -105,7 +105,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   post['sections'] = [];
   post['sections'][0] = new Object();
   post['sections'][0]['activityTitle'] = 'Live Stream Started';
-  post['sections'][0]['activityImage'] = 'https://bitfocus.io/_next/image?url=%2Fcompanion.png&w=128&q=75';
+  post['sections'][0]['activityImage'] = 'https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png';
   post['sections'][0]['facts'] = [];
   post['sections'][0]['markdown'] = true;
 

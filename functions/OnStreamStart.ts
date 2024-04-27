@@ -28,13 +28,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
   }
 
-  // Validate Admin Key
-  const body = await context.request.json<PostBody>();
-  if (!body || body.key !== context.env.AdminKey) {
+  // Validate Admin Key from query string
+  const request = context.request;
+  const params = new URL(request.url).searchParams;
+  const key = params.get("key");
+
+  if (key !== context.env.AdminKey) {
     return new Response("Unauthorized", { status: 401 });
   }
-  
-  
+
   
   //
   // Check if Access Token is Expired

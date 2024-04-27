@@ -132,7 +132,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   let html = "<table><tr><th>Platform</th><th>Channel Name</th><th>Status</th><th>URL<th/></tr>";
   for (let channel of data) {
-    html += `<tr><td>${platformMap[channel.streamingPlatformId].name}</td><td>${channel.displayName}</td><td>${channel.active}</td><td>${channel.url}</td></tr>`;
+    html += `<tr><td>${platformMap[channel.streamingPlatformId].name}</td><td>${channel.displayName}</td><td>${channel.active ? "Enabled" : "Disabled"}</td><td><a href=\"${channel.url}\">Link</a></td></tr>`;
   }
   html += "</table>";
 

@@ -127,18 +127,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   //
-  // Build HTML Table with all the channels and their status
+  // Build JSON Response
   //
 
-  let html = "<table><tr><th>Platform</th><th>Channel Name</th><th>Status</th><th>URL<th/></tr>";
+  let responseChannels = [];
   for (let channel of data) {
-    html += `<tr><td>${platformMap[channel.streamingPlatformId].name}</td><td>${channel.displayName}</td><td>${channel.active ? "Enabled" : "Disabled"}</td><td><a href=\"${channel.url}\">Link</a></td></tr>`;
+    let platform = platformMap[channel.streamingPlatformId];
+    responseChannels.push({
+      name: channel.displayName,
+      platform: platform,
+      url: channel.url,
+      active: channel.active,
+    });
   }
-  html += "</table>";
 
-  return new Response(html, {
-      headers: {
-        "content-type": "text/html",
-      },
-  });
 };

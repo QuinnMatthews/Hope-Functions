@@ -1,6 +1,24 @@
-interface Env {
-  KV: KVNamespace;
+interface Platform {
+  id: number;
+  name: string;
+  url: string;
+  image: any;
 }
+
+interface Channel {
+  id: number;
+  streamingPlatformId: number;
+  displayName: string;
+  active: boolean;
+  url: string;
+  embedUrl: string;
+  identifier: string;
+}
+
+interface ErrorResp {
+  error: string;
+}
+
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   //
@@ -81,20 +99,26 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     },
   });
 
-  let data: any = await response.json();
+  let data = await response.json<Channel[] | ErrorResp>();
 
-  if (data.error) {
-    return new Response(data.error, { status: 401 });
+  if ((data as ErrorResp).error) {
+    return new Response((data as ErrorResp).error, { status: 401 });
+  } else {
+    data = data as Channel[];
   }
+
 
   //
   // Get Platforms
   //
   response = await fetch("https://api.restream.io/v2/platform/all");
-  let platforms: any = await response.json();
 
-  if (platforms.error) {
-    return new Response(platforms.error, { status: 401 });
+  let platforms = await response.json<Platform[] | ErrorResp>();
+
+  if ((platforms as ErrorResp).error) {
+    return new Response((platforms as ErrorResp).error, { status: 401 });
+  } else {
+    platforms = platforms as Platform[];
   }
 
   let platformMap = {};
@@ -108,7 +132,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   let html = "<table><tr><th>Platform</th><th>Channel Name</th><th>Status</th><th>URL<th/></tr>";
   for (let channel of data) {
-    html += `<tr><td>${platformMap[channel.platformId].name}</td><td>${channel.displayName}</td><td>${channel.active}</td><td>${channel.url}</td></tr>`;
+    html += `<tr><td>${platformMap[channel.streamingPlatformId].name}</td><td>${channel.displayName}</td><td>${channel.active}</td><td>${channel.url}</td></tr>`;
   }
   html += "</table>";
 
@@ -117,8 +141,4 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         "content-type": "text/html",
       },
   });
-
-
-
-
 };

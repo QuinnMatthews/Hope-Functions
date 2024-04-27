@@ -141,4 +141,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
+  return new Response(JSON.stringify(responseChannels), {
+    headers: {
+      "content-type": "application/json",
+    },
+  });
+
 };

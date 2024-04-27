@@ -2,6 +2,7 @@
 function populateStreamsTable() {
     var table = $('#streams-table');
     var tbody = table.find('tbody');
+    tbody.empty();
     $.ajax({
         url: './RestreamChannels',
         type: 'GET',

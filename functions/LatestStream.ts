@@ -88,20 +88,35 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   //
+  // Get Platforms
+  //
+  response = await fetch("https://api.restream.io/v2/platform/all");
+  let platforms: any = await response.json();
+
+  if (platforms.error) {
+    return new Response(platforms.error, { status: 401 });
+  }
+
+  let platformMap = {};
+  for (let platform of platforms) {
+    platformMap[platform.id] = platform;
+  }
+
+  //
   // Build HTML Table with all the channels and their status
   //
 
-    let html = "<table><tr><th>Channel Name</th><th>Status</th></tr>";
-    for (let channel of data) {
-      html += `<tr><td>${channel.name}</td><td>${channel.status}</td></tr>`;
-    }
-    html += "</table>";
+  let html = "<table><tr><th>Platform</th><th>Channel Name</th><th>Status</th><th>URL<th/></tr>";
+  for (let channel of data) {
+    html += `<tr><td>${platformMap[channel.platformId].name}</td><td>${channel.displayName}</td><td>${channel.active}</td><td>${channel.url}</td></tr>`;
+  }
+  html += "</table>";
 
-    return new Response(html, {
-        headers: {
-            "content-type": "text/html",
-        },
-    });
+  return new Response(html, {
+      headers: {
+        "content-type": "text/html",
+      },
+  });
 
 
 

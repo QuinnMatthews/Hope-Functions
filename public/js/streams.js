@@ -3,7 +3,7 @@ function populateStreamsTable() {
     var table = $('#streams-table');
     var tbody = table.find('tbody');
     $.ajax({
-        url: 'https://develop.hope-functions.pages.dev/RestreamChannels', // TODO: Change to your server URL
+        url: './RestreamChannels',
         type: 'GET',
         success: function(data) {
             data.forEach(function(stream) {
@@ -12,7 +12,7 @@ function populateStreamsTable() {
                 <td class="py-3 px-4">${stream.name}</td>
                 <td class="py-3 px-4">${stream.platform.name}</td>
                 <td class="py-3 px-4"><a href="${stream.url}" target="_blank" class="font-medium text-blue-600 hover:text-blue-800">View</a></td>
-                <td class="py-3 px-4"><input type="checkbox" disabled ${stream.is_live ? 'checked' : ''} class="form-checkbox h-5 w-5 text-blue-600"></td>
+                <td class="py-3 px-4">${stream.enabled ? 'Yes' : 'No'}</td>
               </tr>
                 `)
             });

@@ -9,7 +9,7 @@ interface Channel {
   id: number;
   streamingPlatformId: number;
   displayName: string;
-  active: boolean;
+  enabled: boolean; // Note restream's documentation says this is active, but it's actually enabled
   url: string;
   embedUrl: string;
   identifier: string;
@@ -137,7 +137,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       name: channel.displayName,
       platform: platform,
       url: channel.url,
-      active: channel.active,
+      enabled: channel.enabled,
     });
   }
 

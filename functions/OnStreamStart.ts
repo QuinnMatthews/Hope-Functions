@@ -150,7 +150,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   //
   // Build Teams Post
   //
-  for (let streamEvent of inprogressEvents) {
+  for (let streamEvent of inprogressEvents) { // TODO: We probably need to handle multiple in-progress events better than this but for now we are likely to only have one
     var post = new Object();
     post["@type"] = "MessageCard";
     post["@context"] = "http://schema.org/extensions";
@@ -159,6 +159,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     post["sections"] = [];
     post["sections"][0] = new Object();
     post["sections"][0]["activityTitle"] = "Live Stream Started";
+    post["sections"][0]["activitySubtitle"] = streamEvent.title;
     post["sections"][0]["activityImage"] =
       "https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png";
     post["sections"][0]["facts"] = [];
@@ -171,8 +172,39 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         name: `${platform.name} - ${channel.displayName}`,
         value: destination.externalUrl,
       });
-      post["sections"][0]["facts"].push({ name: "URL", value: channel.url });
     }
+
+    if (streamEvent.destinations.length == 0) {
+      post["sections"][0]["facts"].push({
+        name: "Restream",
+        value: "No Streams Found (Stream is active in Restream but no channels enabled)", 
+      });
+    }
+
+    // Post to Teams
+    inprogressEventsResp = await fetch(context.env.TeamsWebhook, {
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(post),
+    });
+  } 
+
+  //
+  // Handle Case where no in-progress events are found
+  //
+  if (inprogressEvents.length == 0) {
+    post["@type"] = "MessageCard";
+    post["@context"] = "http://schema.org/extensions";
+    post["themeColor"] = "0076D7";
+    post["summary"] = "Live Stream Started but no streams found";
+    post["sections"] = [];
+    post["sections"][0] = new Object();
+    post["sections"][0]["activityTitle"] = "Live Stream Started";
+    post["sections"][0]["activitySubtitle"] = "A live stream has started but restream has no active streams, this could indicate an issue with the restream service or our network";
+    post["sections"][0]["activityImage"] =
+      "https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png";
 
     // Post to Teams
     inprogressEventsResp = await fetch(context.env.TeamsWebhook, {

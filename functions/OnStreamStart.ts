@@ -1,6 +1,4 @@
-interface PostBody {
-  key: string;
-}
+import { Platform, Channel, ErrorResp, Event } from "./types";
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   //
@@ -21,14 +19,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     { param: client_id            , message: "Client ID"                },
     { param: client_secret        , message: "Client Secret"            },
   ];
-  
+
   for (const param of requiredParams) {
     if (!param.param) {
       return new Response(`${param.message} Not Found`, { status: 400 });
     }
   }
 
+  //
   // Validate Admin Key from query string
+  // TODO: We should use a more secure method to authenticate
+  //
   const request = context.request;
   const params = new URL(request.url).searchParams;
   const key = params.get("key");
@@ -37,13 +38,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  
   //
   // Check if Access Token is Expired
   //
   let access_token_exp = parseInt(access_token_expires);
   let current_time = Math.floor(Date.now() / 1000);
-  
+
   if (current_time > access_token_exp) {
     // Check if Refresh Token is Expired
 
@@ -68,74 +68,130 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Update KV Store with new tokens
-    access_token      = data.access_token;
-    refresh_token     = data.refresh_token;
+    access_token = data.access_token;
+    refresh_token = data.refresh_token;
     refresh_token_exp = data.refreshTokenExpiresEpoch;
-    access_token_exp  = data.accessTokenExpiresEpoch;
+    access_token_exp = data.accessTokenExpiresEpoch;
 
-    await context.env.KV.put("access_token",      access_token);
-    await context.env.KV.put("refresh_token",     refresh_token);
-    await context.env.KV.put("access_token_exp",  access_token_exp.toString());
+    await context.env.KV.put("access_token", access_token);
+    await context.env.KV.put("refresh_token", refresh_token);
+    await context.env.KV.put("access_token_exp", access_token_exp.toString());
     await context.env.KV.put("refresh_token_exp", refresh_token_exp.toString());
   }
 
   //
-  // Get Channels
+  // Get Platform Info
   //
-  let response = await fetch("https://api.restream.io/v2/user/channel/all", {
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-    },
-  });
+  let platformsResp = await fetch("https://api.restream.io/v2/platform/all");
+  let platforms = await platformsResp.json<Platform[] | ErrorResp>();
 
-  let data: any = await response.json();
+  if ((platforms as ErrorResp).error) {
+    return new Response((platforms as ErrorResp).error, {
+      status: platformsResp.status,
+    });
+  } else {
+    platforms = platforms as Platform[];
+  }
 
-  if (data.error) {
-    return new Response(data.error, { status: 401 });
+  let platformMap = {};
+  for (let platform of platforms) {
+    platformMap[platform.id] = platform;
+  }
+
+  //
+  // Get In-Progress Events
+  //
+  let inprogressEventsResp = await fetch(
+    "https://api.restream.io/v2/user/events/in-progress",
+    {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    }
+  );
+
+  let inprogressEvents = await inprogressEventsResp.json<Event[] | ErrorResp>();
+
+  if ((inprogressEvents as ErrorResp).error) {
+    return new Response((inprogressEvents as ErrorResp).error, {
+      status: inprogressEventsResp.status,
+    });
+  } else {
+    inprogressEvents = inprogressEvents as Event[];
+  }
+
+  //
+  // Get Channel Info
+  //
+  let channelInfoResp = await fetch(
+    "https://api.restream.io/v2/user/channel/all",
+    {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    }
+  );
+
+  let channelInfo = await channelInfoResp.json<Channel[] | ErrorResp>();
+
+  if ((channelInfo as ErrorResp).error) {
+    return new Response((channelInfo as ErrorResp).error, {
+      status: channelInfoResp.status,
+    });
+  } else {
+    channelInfo = channelInfo as Channel[];
+  }
+
+  let channelMap = {};
+  for (let channel of channelInfo) {
+    channelMap[channel.id] = channel;
   }
 
   //
   // Build Teams Post
   //
-  var post = new Object();
-  post["@type"] = "MessageCard";
-  post["@context"] = "http://schema.org/extensions";
-  post["themeColor"] = "0076D7";
-  post["summary"] = "New Live Stream URLs";
-  post["sections"] = [];
-  post["sections"][0] = new Object();
-  post["sections"][0]["activityTitle"] = "Live Stream Started";
-  post["sections"][0]["activityImage"] =
-    "https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png";
-  post["sections"][0]["facts"] = [];
-  post["sections"][0]["markdown"] = true;
+  for (let streamEvent of inprogressEvents) {
+    var post = new Object();
+    post["@type"] = "MessageCard";
+    post["@context"] = "http://schema.org/extensions";
+    post["themeColor"] = "0076D7";
+    post["summary"] = "New Live Stream URLs";
+    post["sections"] = [];
+    post["sections"][0] = new Object();
+    post["sections"][0]["activityTitle"] = "Live Stream Started";
+    post["sections"][0]["activityImage"] =
+      "https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png";
+    post["sections"][0]["facts"] = [];
+    post["sections"][0]["markdown"] = true;
 
-  for (var channel of data) {
-    if (channel.enabled) {
+    for (var destination of streamEvent.destinations) {
+      var channel = channelMap[destination.channelId];
+      var platform = platformMap[destination.streamingPlatformId];
       post["sections"][0]["facts"].push({
-        name: "Display Name",
-        value: channel.displayName,
+        name: `${platform.name} - ${channel.displayName}`,
+        value: destination.externalUrl,
       });
       post["sections"][0]["facts"].push({ name: "URL", value: channel.url });
     }
+
+    // Post to Teams
+    inprogressEventsResp = await fetch(context.env.TeamsWebhook, {
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(post),
+    });
   }
 
-  // Post to Teams
-  response = await fetch(context.env.TeamsWebhook, {
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-    body: JSON.stringify(post),
-  });
+  inprogressEvents = await inprogressEventsResp.json();
+  console.log(JSON.stringify(inprogressEvents));
 
-  data = await response.json();
-
-  console.log(JSON.stringify(data));
-
-  if (data.error) {
-    return new Response(data.error, { status: 400 });
+  if ((inprogressEvents as ErrorResp).error) {
+    return new Response((inprogressEvents as ErrorResp).error, {
+      status: inprogressEventsResp.status,
+    });
   }
 
-  return new Response(JSON.stringify(data), { status: 200 });
+  return new Response(JSON.stringify(inprogressEvents), { status: 200 });
 };

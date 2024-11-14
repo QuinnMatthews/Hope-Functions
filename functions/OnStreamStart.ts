@@ -184,14 +184,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
-  inprogressEvents = await inprogressEventsResp.json();
-  console.log(JSON.stringify(inprogressEvents));
-
-  if ((inprogressEvents as ErrorResp).error) {
-    return new Response((inprogressEvents as ErrorResp).error, {
-      status: inprogressEventsResp.status,
-    });
-  }
-
-  return new Response(JSON.stringify(inprogressEvents), { status: 200 });
+  return new Response(JSON.stringify(inprogressEvents), {
+    headers: {
+      "content-type": "application/json",
+    },
+    status: 200
+  });
 };

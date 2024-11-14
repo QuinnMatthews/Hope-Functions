@@ -210,6 +210,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   //
   if (inprogressEvents.length == 0) {
     console.log("No in-progress events found, sending alert to Teams");
+    var post = new Object();
     post["@type"] = "MessageCard";
     post["@context"] = "http://schema.org/extensions";
     post["themeColor"] = "0076D7";

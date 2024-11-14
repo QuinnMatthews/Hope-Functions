@@ -1,24 +1,4 @@
-interface Platform {
-  id: number;
-  name: string;
-  url: string;
-  image: any;
-}
-
-interface Channel {
-  id: number;
-  streamingPlatformId: number;
-  displayName: string;
-  enabled: boolean; // Note restream's documentation says this is active, but it's actually enabled
-  url: string;
-  embedUrl: string;
-  identifier: string;
-}
-
-interface ErrorResp {
-  error: string;
-}
-
+import {Channel, Platform, ErrorResp} from "./types";
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   //

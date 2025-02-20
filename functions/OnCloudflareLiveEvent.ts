@@ -3,7 +3,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const headers = request.headers;
 
     if (headers.get("cf-webhook-auth") !== context.env.AdminKey) {
-        return new Response(":(", {
+        return new Response(null, {
             headers: {'content-type': 'text/plain'},
             status: 401
         })
@@ -14,8 +14,5 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // so we can see what we actually get sent.
     console.log(incReq)
 
-    return new Response(":)", {
-        headers: {'content-type': 'text/plain'},
-    })
-
+    return new Response();
 };
